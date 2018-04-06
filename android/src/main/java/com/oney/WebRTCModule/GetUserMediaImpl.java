@@ -103,19 +103,35 @@ class GetUserMediaImpl {
 
         // otherwise, use facing mode
         String facingStr = isFacing ? "front" : "back";
+        String deviceName = null;
+        String message = null;
         for (String name : deviceNames) {
             if (enumerator.isFrontFacing(name) == isFacing) {
-                videoCapturer = enumerator.createCapturer(name, new CameraEventsHandler());
-                if (videoCapturer != null) {
-                    Log.d(TAG, "Create " + facingStr + " camera " + name + " succeeded");
-                    return videoCapturer;
-                } else {
-                    Log.d(TAG, "Create " + facingStr + " camera " + name + " failed");
-                }
+                deviceName = name;
+                message = "Create " + facingStr + "-facing camera ";
             }
         }
 
-        // should we fallback to available camera automatically?
+        // fallback to available camera automatically
+        if (deviceName == null && devicenames.length > 0) {
+            Log.d(TAG, "No " + facingStr + "-facing camera detected. Falling back to any available camera.");
+            deviceName = deviceNames[0];
+        }
+
+        if (deviceName != null) {
+            videoCapturer = enumerator.createCapturer(deviceName, new CameraEventsHandler());
+            if (message == null) {
+                message = "Create camera ";
+            }
+            if (videoCapturer != null) {
+                Log.d(TAG, message + deviceName + " succeeded");
+                return videoCapturer;
+            } else {
+                Log.d(TAG, message + deviceName + " failed");
+            }
+        }
+
+        Log.w(TAG, "Unable to identify a suitable camera.");
         return null;
     }
 
